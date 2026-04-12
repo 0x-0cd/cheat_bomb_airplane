@@ -10,10 +10,14 @@ from utils.constants import direction_map
 
 def solve(sol: Solution):
     """
-    随机选择法：
+    曼哈顿距离选择法：
     1. 统计解集中最可能是head的位置
-    2. 如果最可能是head的位置有多个，随机选择一个
+    2. 如果最可能是head的位置有多个，选择与前一次选择的区块的曼哈顿距离最远的备选区块
+    3. 初始状态下，选择第一个备选格
     """
+    # 记录前一次选择的位置
+    previous_pos = None
+
     while True:
         # 计算解集中每个位置是head的次数
         head_matrix = calc_head_time(sol)
@@ -22,7 +26,7 @@ def solve(sol: Solution):
         for x, y in sol.confirmed_heads:
             head_matrix[x][y] = 0
 
-        # 随机选择最可能是head的位置之一
+        # 选择最可能是head的位置之一
         max_count = max(max(row) for row in head_matrix)
         max_positions = [
             (i, j)
@@ -31,18 +35,42 @@ def solve(sol: Solution):
             if head_matrix[i][j] == max_count
         ]
 
-        # 随机输出一个位置
-        print(f"最可能是head的位置：{coordinates_to_str(random.choice(max_positions))}")
+        # 选择位置的逻辑
+        if previous_pos is None:
+            # 初始状态，选择第一个备选格
+            selected_pos = max_positions[0]
+        else:
+            # 计算每个位置与前一次选择的曼哈顿距离
+            max_distance = -1
+            selected_pos = max_positions[0]
+
+            for pos in max_positions:
+                distance = manhattan_distance(previous_pos, pos)
+                if distance > max_distance:
+                    max_distance = distance
+                    selected_pos = pos
+
+        # 输出选择的位置
+        print(f"最可能是head的位置：{coordinates_to_str(selected_pos)}")
         s, t = (
             input("请输入下一个选择的坐标，以及该坐标的类型(类型为head, body, blank)：")
             .strip()
             .split()
         )
         co = str_to_coordinates(s)
+        # 更新前一次选择的位置
+        previous_pos = co
         sol.filter_pos(co, direction_map[t])
         if len(sol.confirmed_heads) == 3:
             print("恭喜你，获胜了！")
             break
+
+
+def manhattan_distance(pos1: Tuple[int, int], pos2: Tuple[int, int]) -> int:
+    """
+    计算两个位置之间的曼哈顿距离
+    """
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 
 def calc_head_time_worker(
@@ -122,6 +150,7 @@ def bench_mark(t: int):
         ans = random.choice(sol._space)
 
         step = 0
+        previous_pos = None
         while len(sol.confirmed_heads) < 3:
             step += 1
 
@@ -132,7 +161,7 @@ def bench_mark(t: int):
             for x, y in sol.confirmed_heads:
                 head_matrix[x][y] = 0
 
-            # 随机选择最可能是head的位置之一
+            # 选择最可能是head的位置之一
             max_count = max(max(row) for row in head_matrix)
             max_positions = [
                 (i, j)
@@ -141,8 +170,24 @@ def bench_mark(t: int):
                 if head_matrix[i][j] == max_count
             ]
 
-            max_co = random.choice(max_positions)
+            # 选择位置的逻辑
+            if previous_pos is None:
+                # 初始状态，选择第一个备选格
+                max_co = max_positions[0]
+            else:
+                # 计算每个位置与前一次选择的曼哈顿距离
+                max_distance = -1
+                max_co = max_positions[0]
+
+                for pos in max_positions:
+                    distance = manhattan_distance(previous_pos, pos)
+                    if distance > max_distance:
+                        max_distance = distance
+                        max_co = pos
+
             block_type = ans[max_co[0]][max_co[1]]
+            # 更新前一次选择的位置
+            previous_pos = max_co
             sol.filter_pos(max_co, block_type)
             if len(sol.confirmed_heads) == 3:
                 results.append(step)
