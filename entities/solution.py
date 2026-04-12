@@ -8,7 +8,7 @@ from utils import calc_res_worker
 
 class Solution:
     def __init__(self, silent_mode: bool = False):  # 开启silent_mode后不会有任何输出
-        self.__space = []
+        self._space = []
 
         # 从缓存文件加载解集，如果失败则初始化解集，并保存到缓存文件
         if not self.__load_cache():
@@ -22,7 +22,7 @@ class Solution:
                 print("从缓存文件加载解集成功！")
 
         if not silent_mode:
-            print(f"解集初始化完成，共 {len(self.__space)} 种合法布局")
+            print(f"解集初始化完成，共 {len(self._space)} 种合法布局")
 
         # 记录已确认的机头位置
         self.confirmed_heads = []
@@ -39,10 +39,10 @@ class Solution:
         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
 
         with open(cache_file, "wb") as f:
-            pickle.dump(self.__space, f)
+            pickle.dump(self._space, f)
 
         if not silent_mode:
-            print(f"缓存文件保存成功，共 {len(self.__space)} 条数据")
+            print(f"缓存文件保存成功，共 {len(self._space)} 条数据")
 
     def __load_cache(self) -> bool:
         """
@@ -57,9 +57,9 @@ class Solution:
 
         try:
             with open(cache_file, "rb") as f:
-                self.__space = pickle.load(f)
+                self._space = pickle.load(f)
 
-            if len(self.__space) > 0:
+            if len(self._space) > 0:
                 return True
             else:
                 return False
@@ -82,13 +82,13 @@ class Solution:
 
         # 合并结果
         for result in results:
-            self.__space.extend(result)
+            self._space.extend(result)
 
     def get_len(self):
         """
         返回当前解集大小
         """
-        return len(self.__space)
+        return len(self._space)
 
     def filter_pos(self, pos: tuple, block_type: Block):
         """
@@ -104,7 +104,7 @@ class Solution:
         x, y = pos
 
         # 过滤掉解空间中不是输入块类型的的位置布局
-        self.__space = [s for s in self.__space if s[x][y] == block_type]
+        self._space = [s for s in self._space if s[x][y] == block_type]
 
         # 记录已确认的机头位置
         if block_type == Block.Head:
@@ -124,7 +124,7 @@ class Solution:
         ```
         """
         res = 0
-        for s in self.__space:
+        for s in self._space:
             if condition(s):
                 res += 1
         return res
