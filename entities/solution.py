@@ -7,19 +7,22 @@ from utils import calc_res_worker
 
 
 class Solution:
-    def __init__(self):
+    def __init__(self, silent_mode: bool = False):  # 开启silent_mode后不会有任何输出
         self.__space = []
 
         # 从缓存文件加载解集，如果失败则初始化解集，并保存到缓存文件
         if not self.__load_cache():
-            print("缓存文件加载失败，开始初始化解集，该过程可能需要一些时间")
-            print(f"【使用 {cpu_count()} 个CPU核心】")
+            if not silent_mode:
+                print("缓存文件加载失败，开始初始化解集，该过程可能需要一些时间")
+                print(f"【使用 {cpu_count()} 个CPU核心】")
             self.__init_space()
             self.__save_cache()
         else:
-            print("从缓存文件加载解集成功！")
+            if not silent_mode:
+                print("从缓存文件加载解集成功！")
 
-        print(f"解集初始化完成，共 {len(self.__space)} 种合法布局")
+        if not silent_mode:
+            print(f"解集初始化完成，共 {len(self.__space)} 种合法布局")
 
         # 记录已确认的机头位置
         self.confirmed_heads = []
@@ -38,7 +41,8 @@ class Solution:
         with open(cache_file, "wb") as f:
             pickle.dump(self.__space, f)
 
-        print(f"缓存文件保存成功，共 {len(self.__space)} 条数据")
+        if not silent_mode:
+            print(f"缓存文件保存成功，共 {len(self.__space)} 条数据")
 
     def __load_cache(self) -> bool:
         """
