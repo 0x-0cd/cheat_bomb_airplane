@@ -1,5 +1,6 @@
 import random
 from multiprocessing import Pool, cpu_count
+from statistics import variance
 from typing import List, Tuple
 from entities.enums import Block
 from entities.solution import Solution
@@ -70,7 +71,7 @@ def calc_head_time(sol: Solution) -> List[List[int]]:
     time = [[0 for _ in range(10)] for _ in range(10)]
 
     # 获取解集
-    space = sol._Solution__space
+    space = sol._space
 
     # 获取CPU核心数
     num_cores = cpu_count()
@@ -101,3 +102,57 @@ def calc_head_time(sol: Solution) -> List[List[int]]:
             time[i][j] += count
 
     return time
+
+
+def bench_mark(t: int):
+    """
+    解法基准测试
+
+    t - 测试次数
+    """
+    # 测试结果集合
+    results = []
+
+    # 测试循环
+    for i in range(t):
+        # 初始化解集
+        sol = Solution(silent_mode=True)
+
+        # 随机选一个局面作为答案
+        ans = random.choice(sol._space)
+
+        step = 0
+        while len(sol.confirmed_heads) < 3:
+            step += 1
+
+            # 计算解集中每个位置是head的次数
+            head_matrix = calc_head_time(sol)
+
+            # 过滤掉已经炸出来的head位置
+            for x, y in sol.confirmed_heads:
+                head_matrix[x][y] = 0
+
+            # 随机选择最可能是head的位置之一
+            max_count = max(max(row) for row in head_matrix)
+            max_positions = [
+                (i, j)
+                for i in range(10)
+                for j in range(10)
+                if head_matrix[i][j] == max_count
+            ]
+
+            max_co = random.choice(max_positions)
+            block_type = ans[max_co[0]][max_co[1]]
+            sol.filter_pos(max_co, block_type)
+            if len(sol.confirmed_heads) == 3:
+                results.append(step)
+                break
+
+        print(f"第{i+1}次测试完成！")
+
+    # 输出基准测试结果
+    print(f"测试次数：{t}")
+    print(f"平均步数：{sum(results) / t}")
+    print(f"最大步数：{max(results)}")
+    print(f"最小步数：{min(results)}")
+    print(f"方差：{variance(results)}")
