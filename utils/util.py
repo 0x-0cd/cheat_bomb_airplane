@@ -35,19 +35,37 @@ def calc_res_worker(args: tuple[Direction, Direction, Direction]):
     results = []
 
     for pos_1 in range(100):
-        if not pg.detect((pos_1 // 10, pos_1 % 10), dir_1):
+        x_1 = pos_1 // 10
+        y_1 = pos_1 % 10
+        if not pg.detect((x_1, y_1), dir_1):
             continue
         for pos_2 in range(pos_1, 100):
-            if not pg.detect((pos_2 // 10, pos_2 % 10), dir_2):
+            x_2 = pos_2 // 10
+            y_2 = pos_2 % 10
+            if not pg.detect((x_2, y_2), dir_2):
                 continue
             for pos_3 in range(pos_2, 100):
-                if not pg.detect((pos_3 // 10, pos_3 % 10), dir_3):
+                x_3 = pos_3 // 10
+                y_3 = pos_3 % 10
+                if not pg.detect((x_3, y_3), dir_3):
                     continue
 
-                # 放置飞机
-                pg.put_plane((pos_1 // 10, pos_1 % 10), dir_1)
-                pg.put_plane((pos_2 // 10, pos_2 % 10), dir_2)
-                pg.put_plane((pos_3 // 10, pos_3 % 10), dir_3)
+                # 放置飞机1
+                pg.put_plane((x_1, y_1), dir_1)
+
+                # 放置飞机2
+                if not pg.detect((x_2, y_2), dir_2):
+                    pg.flush()
+                    continue
+                pg.put_plane((x_2, y_2), dir_2)
+
+                # 放置飞机3
+                if not pg.detect((x_3, y_3), dir_3):
+                    pg.flush()
+                    continue
+                pg.put_plane((x_3, y_3), dir_3)
+
+                # 收集结果
                 results.append(pg.snapshot())
                 pg.flush()
     return results
