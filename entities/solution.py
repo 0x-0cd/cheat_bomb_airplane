@@ -1,12 +1,12 @@
 import os
 import pickle
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 from typing import Any, List, Tuple
 
 import numpy as np
 
-from entities.enums import Direction, Block
-from utils import calc_res_worker
+from entities.enums import Block
+from utils.generator import generate_space
 
 
 class Solution:
@@ -87,25 +87,8 @@ class Solution:
         return False
 
     def __init_space(self):
-        """以方向组合为任务并行生成全部合法布局"""
-        tasks = [
-            (dir_1, dir_2, dir_3)
-            for dir_1 in Direction
-            for dir_2 in Direction
-            for dir_3 in Direction
-        ]
-        with Pool() as pool:
-            results = pool.map(calc_res_worker, tasks)
-        rows = []
-        for result in results:
-            rows.extend(result)
-        self._space = np.array(
-            [
-                [cell.value for row in board for cell in row]
-                for board in rows
-            ],
-            dtype=np.uint8,
-        )
+        """用位运算生成器生成全部合法布局（形状定义在 airplane_offset）"""
+        self._space = generate_space(10, 10)
 
     def get_len(self) -> int:
         return len(self._space)
