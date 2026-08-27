@@ -1,12 +1,11 @@
 import os
-import pickle
 from multiprocessing import cpu_count
 from typing import Any, List, Tuple
 
 import numpy as np
 
 from entities.enums import Block
-from utils.generator import generate_space
+from utils.generator import generate_space, shape_signature
 
 
 class Solution:
@@ -47,43 +46,30 @@ class Solution:
         return self._head_count.copy()
 
     def __save_cache(self, silent_mode: bool = False):
-        """将解集写入 .npy 缓存文件"""
+        """将解集写入带形状签名的 .npy 缓存文件"""
         cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cache")
         os.makedirs(cache_dir, exist_ok=True)
-        np.save(os.path.join(cache_dir, "cached_data.npy"), self._space)
+        np.save(self.__cache_path(), self._space)
         if not silent_mode:
             print(f"缓存文件保存成功，共 {len(self._space)} 条数据")
 
-    def __load_cache(self) -> bool:
-        """优先加载 .npy 缓存；不存在时迁移旧 pickle 缓存（一次性）"""
+    def __cache_path(self) -> str:
+        """缓存文件路径：文件名含形状签名，改形状/网格后自动失效"""
         cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cache")
-        npy_path = os.path.join(cache_dir, "cached_data.npy")
-        if os.path.exists(npy_path):
-            try:
-                arr = np.load(npy_path)
-                if arr.size > 0 and arr.ndim == 2:
-                    self._space = arr.astype(np.uint8)
-                    return True
-            except Exception as e:
-                print(f"加载 .npy 缓存失败：{e}")
+        return os.path.join(cache_dir, f"cached_data_{shape_signature()}.npy")
 
-        pkl_path = os.path.join(cache_dir, "cached_data.pkl")
-        if os.path.exists(pkl_path):
-            try:
-                with open(pkl_path, "rb") as f:
-                    old = pickle.load(f)
-                self._space = np.array(
-                    [
-                        [cell.value for row in board for cell in row]
-                        for board in old
-                    ],
-                    dtype=np.uint8,
-                )
-                if self._space.size > 0:
-                    self.__save_cache(silent_mode=True)
-                    return True
-            except Exception as e:
-                print(f"迁移旧 pickle 缓存失败：{e}")
+    def __load_cache(self) -> bool:
+        """加载当前形状签名对应的缓存；不存在则重新生成（约几秒）"""
+        path = self.__cache_path()
+        if not os.path.exists(path):
+            return False
+        try:
+            arr = np.load(path)
+            if arr.size > 0 and arr.ndim == 2:
+                self._space = arr.astype(np.uint8)
+                return True
+        except Exception as e:
+            print(f"加载 .npy 缓存失败：{e}")
         return False
 
     def __init_space(self):

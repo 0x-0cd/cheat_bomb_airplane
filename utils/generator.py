@@ -10,10 +10,22 @@
 - 一架飞机 = 机头掩码（1 bit）+ 完整掩码（机头 1 bit + 机身 9 bits）
 - 三机布局合法 ⇔ 三架飞机的完整掩码两两位与为 0（重叠检测一次位与）
 """
+import hashlib
+
 import numpy as np
 
 from entities.enums import Direction, Block
 from utils.constants import airplane_offset
+
+
+def shape_signature(rows: int = 10, cols: int = 10) -> str:
+    """形状签名：由 airplane_offset + 网格尺寸计算。
+
+    改飞机形状或网格大小后签名变化 → 缓存文件名变化 → 自动重新生成，
+    避免加载旧形状的解集缓存。
+    """
+    raw = repr((rows, cols, [(d.name, airplane_offset[d]) for d in Direction]))
+    return hashlib.md5(raw.encode()).hexdigest()[:8]
 
 
 def _single_plane_masks(direction: Direction, rows: int, cols: int):
