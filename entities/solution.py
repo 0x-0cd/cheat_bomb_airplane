@@ -16,7 +16,7 @@ class Solution:
                 print("缓存文件加载失败，开始初始化解集，该过程可能需要一些时间")
                 print(f"【使用 {cpu_count()} 个CPU核心】")
             self.__init_space()
-            self.__save_cache()
+            self.__save_cache(silent_mode)
         else:
             if not silent_mode:
                 print("从缓存文件加载解集成功！")
@@ -27,7 +27,7 @@ class Solution:
         # 记录已确认的机头位置
         self.confirmed_heads = []
 
-    def __save_cache(self):
+    def __save_cache(self, silent_mode: bool = False):
         """
         将 self.__space 写入到缓存文件（使用 pickle 序列化）
         """
