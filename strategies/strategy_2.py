@@ -20,9 +20,14 @@ def _select_farthest(sol: Solution, ctx):
 
 
 def solve(sol: Solution):
-    """最远曼哈顿距离法（交互模式）。"""
+    """最远曼哈顿距离法（交互模式）。机头可推断确定时直接提示获胜。"""
     previous_pos = None
     while True:
+        determined = sol.determined_heads()
+        if determined is not None:
+            print(f"机头位置已确定：{'、'.join(coordinates_to_str(h) for h in determined)}")
+            print("恭喜你，获胜了！")
+            break
         selected = _select_farthest(sol, {"previous_pos": previous_pos})
         print(f"最可能是head的位置：{coordinates_to_str(selected)}")
         s, t = (

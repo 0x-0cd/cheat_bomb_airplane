@@ -34,8 +34,13 @@ def _select_ig(sol: Solution, ctx):
 
 
 def solve(sol: Solution):
-    """期望信息增益法（交互模式）。"""
+    """期望信息增益法（交互模式）。机头可推断确定时直接提示获胜。"""
     while True:
+        determined = sol.determined_heads()
+        if determined is not None:
+            print(f"机头位置已确定：{'、'.join(coordinates_to_str(h) for h in determined)}")
+            print("恭喜你，获胜了！")
+            break
         selected = _select_ig(sol, {})
         print(f"最可能是head的位置：{coordinates_to_str(selected)}")
         s, t = (

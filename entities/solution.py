@@ -1,6 +1,6 @@
 import os
 from multiprocessing import cpu_count
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -86,6 +86,26 @@ class Solution:
 
     def get_len(self) -> int:
         return len(self._space)
+
+    def determined_heads(self) -> Optional[List[Tuple[int, int]]]:
+        """若机头位置已被推断确定，返回全部 3 个机头位置；否则返回 None。
+
+        剩余候选机头格数 == 剩余机头数时，候选格即剩余机头：
+        每个存活布局恰好有 remaining 个机头且都必须落在候选集内，
+        因此所有存活布局共享同一组机头位置——无需再猜即可确定。
+        """
+        remaining = 3 - len(self.confirmed_heads)
+        if remaining == 0:
+            return list(self.confirmed_heads)
+        mask = self.head_counts > 0
+        for x, y in self.confirmed_heads:
+            mask[x, y] = False
+        if int(mask.sum()) != remaining:
+            return None
+        xs, ys = np.nonzero(mask)
+        heads = list(self.confirmed_heads)
+        heads.extend((int(x), int(y)) for x, y in zip(xs, ys))
+        return sorted(heads)
 
     def filter_pos(self, pos: tuple, block_type: Block):
         """根据输入坐标和块类型过滤解集，并增量维护机头计数矩阵。

@@ -15,8 +15,16 @@ def _select_random(sol: Solution, ctx):
 
 
 def solve(sol: Solution):
-    """随机选择法（交互模式）：推荐最可能是机头的位置，等待用户反馈。"""
+    """随机选择法（交互模式）：推荐最可能是机头的位置，等待用户反馈。
+
+    机头位置可推断确定时直接提示获胜，不再继续猜测。
+    """
     while True:
+        determined = sol.determined_heads()
+        if determined is not None:
+            print(f"机头位置已确定：{'、'.join(coordinates_to_str(h) for h in determined)}")
+            print("恭喜你，获胜了！")
+            break
         selected = _select_random(sol, {})
         print(f"最可能是head的位置：{coordinates_to_str(selected)}")
         s, t = (
