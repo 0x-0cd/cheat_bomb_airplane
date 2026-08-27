@@ -19,8 +19,9 @@ class Solution:
 
     def __init__(self, silent_mode: bool = False):
         self._space: np.ndarray = np.empty((0, 100), dtype=np.uint8)
-        self._head_count: np.ndarray = np.zeros((10, 10), dtype=np.int64)
+        self._counts: np.ndarray = np.zeros((3, 10, 10), dtype=np.int64)
         self.confirmed_heads: List[Tuple[int, int]] = []
+        self.guessed: List[Tuple[int, int]] = []
 
         if not self.__load_cache():
             if not silent_mode:
@@ -35,15 +36,22 @@ class Solution:
         if not silent_mode:
             print(f"解集初始化完成，共 {len(self._space)} 种合法布局")
 
-        # 完整解集的机头计数矩阵（向量化一次计算，毫秒级）
-        self._head_count = (
-            (self._space == Block.Head.value).sum(axis=0).reshape(10, 10).astype(np.int64)
-        )
+        # 三分类计数张量：counts[k][x][y] = 解集中 (x,y) 格为 k 类的布局数
+        # k: 0=Head, 1=Body, 2=Blank（向量化一次计算，毫秒级）
+        for k in (Block.Head.value, Block.Body.value, Block.Blank.value):
+            self._counts[k] = (
+                (self._space == k).sum(axis=0).reshape(10, 10)
+            )
 
     @property
     def head_counts(self) -> np.ndarray:
         """当前解集中每个格子是机头的布局数矩阵（副本，避免外部误改）"""
-        return self._head_count.copy()
+        return self._counts[Block.Head.value].copy()
+
+    @property
+    def counts(self) -> np.ndarray:
+        """三分类计数张量 (3, 10, 10) 副本：counts[k][x][y] = (x,y) 格为 k 类的布局数"""
+        return self._counts.copy()
 
     def __save_cache(self, silent_mode: bool = False):
         """将解集写入带形状签名的 .npy 缓存文件"""
@@ -89,9 +97,11 @@ class Solution:
         keep = self._space[:, idx] == block_type.value
         removed = self._space[~keep]
         if len(removed) > 0:
-            removed_head = (removed == Block.Head.value).sum(axis=0).reshape(10, 10)
-            self._head_count -= removed_head
+            # 增量更新三分类计数：对被剪掉的布局回减各类贡献
+            for k in (Block.Head.value, Block.Body.value, Block.Blank.value):
+                self._counts[k] -= (removed == k).sum(axis=0).reshape(10, 10)
         self._space = self._space[keep]
+        self.guessed.append((x, y))
         if block_type == Block.Head:
             self.confirmed_heads.append((x, y))
 

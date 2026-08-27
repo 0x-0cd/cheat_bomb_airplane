@@ -7,8 +7,9 @@ from utils import coordinates_to_str, str_to_coordinates
 from utils.constants import direction_map
 
 
-def _select_random(matrix, ctx):
+def _select_random(sol: Solution, ctx):
     """随机选择法：在计数最大的候选位置中随机选一个。"""
+    matrix = head_count_matrix(sol)
     positions = pick_max_positions(matrix)
     return random.choice(positions)
 
@@ -16,8 +17,7 @@ def _select_random(matrix, ctx):
 def solve(sol: Solution):
     """随机选择法（交互模式）：推荐最可能是机头的位置，等待用户反馈。"""
     while True:
-        matrix = head_count_matrix(sol)
-        selected = _select_random(matrix, {})
+        selected = _select_random(sol, {})
         print(f"最可能是head的位置：{coordinates_to_str(selected)}")
         s, t = (
             input("请输入下一个选择的坐标，以及该坐标的类型(类型为head, body, blank)：")

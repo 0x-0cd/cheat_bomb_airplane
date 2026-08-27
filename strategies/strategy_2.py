@@ -9,8 +9,9 @@ def manhattan_distance(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 
-def _select_farthest(matrix, ctx):
+def _select_farthest(sol: Solution, ctx):
     """最远曼哈顿距离法：计数最大的候选中，选离上一次选择最远的。"""
+    matrix = head_count_matrix(sol)
     positions = pick_max_positions(matrix)
     previous = ctx.get("previous_pos")
     if previous is None:
@@ -22,12 +23,7 @@ def solve(sol: Solution):
     """最远曼哈顿距离法（交互模式）。"""
     previous_pos = None
     while True:
-        matrix = head_count_matrix(sol)
-        positions = pick_max_positions(matrix)
-        if previous_pos is None:
-            selected = positions[0]
-        else:
-            selected = max(positions, key=lambda p: manhattan_distance(previous_pos, p))
+        selected = _select_farthest(sol, {"previous_pos": previous_pos})
         print(f"最可能是head的位置：{coordinates_to_str(selected)}")
         s, t = (
             input("请输入下一个选择的坐标，以及该坐标的类型(类型为head, body, blank)：")

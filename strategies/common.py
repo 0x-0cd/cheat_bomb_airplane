@@ -36,11 +36,11 @@ def pick_max_positions(matrix: np.ndarray) -> List[Tuple[int, int]]:
 
 def run_benchmark(
     t: int,
-    select_fn: Callable[[np.ndarray, Dict], Tuple[int, int]],
+    select_fn: Callable[[Solution, Dict], Tuple[int, int]],
 ) -> List[int]:
     """通用基准测试。
 
-    select_fn(matrix, ctx) -> (x, y)：根据计数矩阵和上下文选择下一格。
+    select_fn(sol, ctx) -> (x, y)：根据当前解集和上下文选择下一格。
     ctx 由调用方约定（如策略 2 用它记录 previous_pos）。
     返回每局的步数列表。
     """
@@ -52,8 +52,7 @@ def run_benchmark(
         step = 0
         while len(sol.confirmed_heads) < 3:
             step += 1
-            matrix = head_count_matrix(sol)
-            pos = select_fn(matrix, ctx)
+            pos = select_fn(sol, ctx)
             block_type = Block(int(ans[pos[0] * 10 + pos[1]]))
             ctx["previous_pos"] = pos
             sol.filter_pos(pos, block_type)
